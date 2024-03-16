@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:alarm/homescreen.dart';
 import 'package:alarm/registration.dart';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -11,21 +12,78 @@ class _LoginScreenState extends State<LoginScreen> {
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  void login() {
+  RegExp emailRegExp = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+  RegExp passwordExp = RegExp(r"^(?=.*[A-Za-z])(?=.*\d).{8,}$");
+
+  Future<void> login() async {
     String email = emailController.text;
     String password = passwordController.text;
-    if (email.isNotEmpty && password.isNotEmpty) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
+
+    if (emailRegExp.hasMatch(email) && passwordExp.hasMatch(password)) {
+          Uri url = Uri.parse("http://localhost:8080/send-data");
+          Map<String, String> headers = {"Content-type": "application/json"};
+
+          String json =
+              '{"message": "Hello from Flutter","Email": "$email","Password": "$password"}';
+          http.Response response =
+              await http.post(url, headers: headers, body: json);
+          if (response.statusCode == 200) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Verification Successful'),
+                  content: Text('Login  successful!'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HomeScreen(),
+                          ),
+                        );
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+            print('Data sent successfully');
+          } else {
+            print('Failed to send data. Status code: ${response.statusCode}');
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: Text('Verification Failed'),
+                  content: Text('Invalid User And Password.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => LoginScreen(),
+                          ),
+                        );
+                      },
+                      child: Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
     } else {
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             title: Text('Error'),
-            content: Text('Please enter both email and password.'),
+            content: Text(
+                'Please enter a valid email and a password with at least 8 characters, including uppercase, lowercase, and numbers.'),
             actions: [
               TextButton(
                 onPressed: () {
@@ -49,36 +107,36 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/background_image.png'), 
-                fit: BoxFit.cover,
-              ),
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: Image.asset(
+              'assets/images/background_image.jpg',
+              fit: BoxFit.cover,
             ),
           ),
           Center(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Container(
-                  width: MediaQuery.of(context).size.width * 0.3, 
+                  width: MediaQuery.of(context).size.width * 0.5,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Image.asset(
-                        'assets/images/login_image.png', 
-                        width: 200, 
+                        'assets/images/login_image.jpg',
+                        width: 200,
                       ),
                       SizedBox(height: 16.0),
                       Container(
                         width: double.infinity,
                         child: Text(
-                          'Login Screen',
+                          'Login',
                           style: TextStyle(fontSize: 24.0),
                           textAlign: TextAlign.center,
                         ),
                       ),
-                      SizedBox(height: 16.0),
+                      SizedBox(height: 8.0),
                       Container(
                         width: double.infinity,
                         child: TextField(
@@ -95,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           decoration: InputDecoration(labelText: 'Password'),
                         ),
                       ),
-                      SizedBox(height: 16.0),
+                      SizedBox(height: 8.0),
                       Container(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -103,17 +161,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Text('Login'),
                         ),
                       ),
-                      SizedBox(height: 8.0),
-                      Container(
-                        width: double.infinity,
-                        child: TextButton(
-                          onPressed: () {
+                      SizedBox(height: 16.0),
+                      Card(
+                        child: ListTile(
+                          title: Text(
+                            'Sign Up',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 14.0), // Adjust font size here
+                          ),
+                          onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => RegistrationScreen()),
+                              MaterialPageRoute(
+                                  builder: (context) => RegistrationScreen()),
                             );
                           },
-                          child: Text('Create an Account'),
                         ),
                       ),
                     ],
